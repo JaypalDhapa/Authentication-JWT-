@@ -6,6 +6,8 @@ const router = express.Router();
 router.get("/fetchUsers",fetchUsers);
 router.post("/register",registerUser);
 router.post("/login",loginUser);
+
+//protected route
 router.get("/profile",protect ,(req,res)=>{
     res.json({
         msg:"Welcome user"
