@@ -58,7 +58,7 @@ exports.loginUser = async (req,res)=>{
     try{
         const user = await User.findOne({email});
         if(!user){
-            res.status(404).json({
+            return res.status(404).json({
                 sucees:false,
                 message:"User not found"
             });
@@ -75,10 +75,11 @@ exports.loginUser = async (req,res)=>{
         }
         const token = generateToken(user._id);
 
+        //set cookie
         res.cookie("token",token,{
             httpOnly:true,
             secure:false,
-            sameSite:"strict",
+            sameSite:"lax",
             maxAge:24*60*60*1000
         });
         res.json({
@@ -92,8 +93,19 @@ exports.loginUser = async (req,res)=>{
     }
 }
 
-exports.logout = (req, res) => {
-    res.clearCookie("token");
-    res.json({ msg: "Logged out" });
+exports.logout = async (req, res) => {
+    try{
+        console.log("requist come inside logout router");
+        res.clearCookie("token");
+        return res.json({
+            success:true
+        })
+
+    }catch(err){
+        res.json({
+            success:false,
+            msg:"logout err from server"
+        })
+    }
   };
   

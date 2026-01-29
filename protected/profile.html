@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Profile</title>
+</head>
+<body>
+
+  <h2>Profile</h2>
+  <pre id="data"></pre>
+
+  <button onclick="logout()">Logout</button>
+
+
+  <script>
+    async function logout(){
+      try{
+        const res = await fetch("http://localhost:3000/api/auth/logout", {
+        method: "POST",
+        credentials: "include"   // ⭐ REQUIRED
+        });
+        const data = await res.json();
+        console.log("hello")
+        if(data.success){
+          window.location.href = "/login"
+        }
+      }catch(err){
+        console.log("somthing went wrong for logout",err);
+      }
+    }
+  </script>
+ 
+</body>
+</html>
