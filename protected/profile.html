@@ -6,12 +6,27 @@
 <body>
 
   <h2>Profile</h2>
+  <h2 id="user"></h2>
   <pre id="data"></pre>
 
   <button onclick="logout()">Logout</button>
 
 
   <script>
+
+const user = document.getElementById("user");
+    async function getUserdata(){
+      try{
+          const res = await fetch("http://localhost:3000/api/auth/getUserdata");
+          const data = await res.json();
+          user.innerText = `Welcome ${data.name}`;
+      }catch(err){
+        console.log("faild to fetch user data",err);
+      }
+    }
+
+    getUserdata();
+
     async function logout(){
       try{
         const res = await fetch("http://localhost:3000/api/auth/logout", {

@@ -108,4 +108,20 @@ exports.logout = async (req, res) => {
         })
     }
   };
+
+  exports.getUserdata = async (req,res)=>{
+    try{
+        const user = await User.findById(req.userId).select("name");
+
+        res.json({
+            success:true,
+            name:user.name
+        });
+    }catch(err){
+        res.json({
+            success:false,
+            msg:"faild to get name from database"
+        })
+    }
+  }
   

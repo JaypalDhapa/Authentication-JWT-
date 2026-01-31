@@ -14,6 +14,7 @@ router.get("/login",(req,res)=>{
 });
 
 router.get("/profile",protect,(req,res)=>{
+    console.log("user id:",req.userId);
     res.sendFile(path.join(__dirname,"../protected/profile.html"));
 });
 
