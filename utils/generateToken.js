@@ -6,6 +6,6 @@ const generateToken = (userId)=>{
         process.env.JWT_SECRET,
         {expiresIn:"1d"}
     );
-};
+}; 
 
 module.exports = generateToken;

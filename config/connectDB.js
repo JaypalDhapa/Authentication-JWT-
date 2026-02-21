@@ -8,6 +8,6 @@ const connectDB = async ()=>{
         console.log("Faild to connectDB");
         process.exit(1);
     }
-}
+} 
 
 module.exports = connectDB;

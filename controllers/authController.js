@@ -1,6 +1,9 @@
 const User = require('../models/user');
+const Otp = require("../models/otp")
 const bcrypt = require('bcrypt');
 const generateToken = require("../utils/generateToken");
+const sendOtpEmail = require("../services/emailService");
+const {generateOtp} = require("../services/otpServices");
 
 exports.fetchUsers = async (req,res)=>{
     try{
@@ -8,7 +11,7 @@ exports.fetchUsers = async (req,res)=>{
         res.json({
             users
         })
-    }catch(err){
+    }catch(err){ 
         res.json({
             sucess:false,
             message:"faild to Fetch all users"
@@ -16,8 +19,8 @@ exports.fetchUsers = async (req,res)=>{
     }
 }
 
-exports.registerUser = async (req,res)=>{
-    const {name,email,password} = req.body;
+exports.sendOtp = async (req,res)=>{
+    const {email} = req.body;
 
     try{
         const userExists = await User.findOne({email});
@@ -30,26 +33,134 @@ exports.registerUser = async (req,res)=>{
             })
         }
 
+        const otp = await generateOtp();
+        
+       await Otp.deleteMany({email});
+
+       //Save New OTP
+       await Otp.create({
+        email,
+        otp,
+        expiresAt:new Date(Date.now() +5 *60*1000) //5minutes
+       })
+
+        //send email
+        await sendOtpEmail(email,otp);
+
+        res.json({
+            success:true,
+            message:"OTP sent successfully"
+        });
+
+    }catch(err){
+        console.log(err);
+        res.json({
+            success:false,
+            message:"faild to send otp"
+        });
+    }
+}
+
+exports.verifyEmailOtp = async (req,res)=>{
+    const {email,otp} = req.body;
+
+    try{
+        const otpRecord = await Otp.findOne({
+            email,
+            otp,
+            expiresAt:{ $gt:new Date()}
+        });
+
+        
+        if(!otpRecord){
+            return res.status(400).json({
+                success:false,
+                message:"Invalid or expired OTP"
+            })
+        }
+        
+        otpRecord.isVerified = true;
+       
+
+       res.status(200).json({
+        success:true,
+        message:"Otp verified successfully"
+       })
+
+    }catch(err){
+        res.json({
+            error:err
+        })
+    }
+}
+
+//Complete Registration
+
+exports.registerUser = async (req,res)=>{
+    const {fullName,email,password,otp} = req.body;
+
+    try{
+
+        //verify OTP again
+        const otpRecord = await Otp.findOne({
+            email,
+            otp,
+            expiresAt:{$gt:new Date()}
+        });
+
+        if(!otpRecord){
+            return res.status(400).json({
+                success:false,
+                message:"Invalid or expired OTP"
+            })
+        }
+
+        
+         //Check if user already exists 
+         const existingUser = await User.findOne({email});
+         if(existingUser){
+             return res.status(400).json({
+                 success:false,
+                 message:"Email already registered"
+             });
+         }
+
+         
+         /*
+         
+        //is verified OTP
+        const otpRecord = await Otp.findOne({email});
+    
+         console.log(otpRecord);
+
+        if(!(otpRecord.isVerified)){
+            return res.status(400).json({
+                success:false,
+                message:"Otp not verified please verify"
+            });
+        }
+        */
+        
         //hash password
         const hashedPassword = await bcrypt.hash(password,10);
 
         //create new user
         await User.create({
-            name,
+            fullName,
             email,
             password:hashedPassword
         });
+
+        //Delete used OTP
+        await Otp.deleteMany({email});
 
         res.json({
             success:true,
             message:"User created"
         });
+        
     }catch(err){
-        console.log(err);
-        res.json({
-            success:false,
-            message:"faild to create user"
-        });
+
     }
 }
 
@@ -125,3 +236,14 @@ exports.logout = async (req, res) => {
     }
   }
   
+
+  exports.verifyOtp= async (req,res)=>{
+    const {email,otp}= req.body;
+    try{
+        sendOtpEmail(email);
+        
+
+    }catch(err){
+
+    }
+  }
